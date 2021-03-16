@@ -71,29 +71,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     */
 };
 
-led_instruction_t led_base = { .flags = LED_FLAG_USE_RGB, .r = 0x00, .g = 0xff, .b = 0xff };
 
 const uint32_t TIMEOUT = 1000*60*15; // 15 minutes
 
-uint32_t last_keypress_time;
-int stored_led_lighting_mode = -1;
-
-uint8_t hidtest = 0;
-
 void matrix_init_user(void) {
-    last_keypress_time = timer_read32();
 };
 
 void matrix_scan_user(void) {
-    if (hidtest != 0)
-        led_base.r = hidtest;
-    if (timer_elapsed32(last_keypress_time) > TIMEOUT && stored_led_lighting_mode == -1)
-    {
-        stored_led_lighting_mode = led_lighting_mode;
-        led_lighting_mode = LED_MODE_INDICATORS_ONLY;
-
-        dprintf("led timeout - saved mode %d\n", stored_led_lighting_mode);
-    }
 };
 
 #define LED_ID0_FNKEYS   0b00000000000000000001111111111110
@@ -101,62 +85,36 @@ void matrix_scan_user(void) {
 #define LED_ID2_LETTERS  0b00000000000000000000000001111111
 #define LED_ID1_CAPSLOCK 0b00000000000001000000000000000000
 
-const led_instruction_t led_null = { .end = 1 };
-
-uint32_t runtime_color_configval = 0;
-uint32_t runtime_color_configpos = 0;
 
 void raw_hid_receive(uint8_t* data, uint8_t length)
 {
-    dprintf("_print\n");
-    dprintf("_print2\n");
+    dprintf("raw_hid_receive\n");
 }
+
+//uint32_t runtime_color_configval = 0;
+//uint32_t runtime_color_configpos = 0;
 
 void handle_runtime_color_config(uint16_t keycode) {
-    uint16_t v = keycode - CNF_0;
-    runtime_color_configval |= v << (runtime_color_configpos++ * 4);
-    if (runtime_color_configpos == 6) {
-        led_base.r = (runtime_color_configval >>  0) & 0xff;
-        led_base.g = (runtime_color_configval >>  8) & 0xff;
-        led_base.b = (runtime_color_configval >> 16) & 0xff;
+  //uint16_t v = keycode - CNF_0;
+  //runtime_color_configval |= v << (runtime_color_configpos++ * 4);
+  //if (runtime_color_configpos == 6) {
+  //    led_base.r = (runtime_color_configval >>  0) & 0xff;
+  //    led_base.g = (runtime_color_configval >>  8) & 0xff;
+  //    led_base.b = (runtime_color_configval >> 16) & 0xff;
 
-        led_base.r = ((led_base.r&0x0f)<<4) | ((led_base.r&0xf0)>>4);
-        led_base.g = ((led_base.g&0x0f)<<4) | ((led_base.g&0xf0)>>4);
-        led_base.b = ((led_base.b&0x0f)<<4) | ((led_base.b&0xf0)>>4);
+  //    led_base.r = ((led_base.r&0x0f)<<4) | ((led_base.r&0xf0)>>4);
+  //    led_base.g = ((led_base.g&0x0f)<<4) | ((led_base.g&0xf0)>>4);
+  //    led_base.b = ((led_base.b&0x0f)<<4) | ((led_base.b&0xf0)>>4);
 
-        led_instructions[0] = led_base;
+  //    led_instructions[0] = led_base;
 
-        runtime_color_configval = 0;
-        runtime_color_configpos = 0;
-    }
+  //    runtime_color_configval = 0;
+  //    runtime_color_configpos = 0;
+  //}
 }
-
-led_instruction_t led_instructions[] = {
-    { .flags = LED_FLAG_USE_RGB, .r = 0x00, .g = 0xff, .b = 0xff },
-
-    // red on capslock
-    {
-        .flags = LED_FLAG_USE_RGB|LED_FLAG_MATCH_LAYER|LED_FLAG_MATCH_ID,
-        .layer = 1,
-        .id1 = LED_ID1_LETTERS|LED_ID1_CAPSLOCK,
-        .id2 = LED_ID2_LETTERS,
-        .r = 255, .g = 0, .b = 0
-    },
-
-    led_null,
-};
-
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
-
-    last_keypress_time = timer_read32();
-    if (stored_led_lighting_mode != -1)
-    {
-        dprintf("led wakeup - restore mode %d\n", stored_led_lighting_mode);
-        led_lighting_mode = stored_led_lighting_mode; // FIXME restoring w/ stored_led_lighting_mode doesn't work - why?
-        stored_led_lighting_mode = -1;
-    }
 
     switch (keycode) {
         case DBG_TOG:
@@ -192,10 +150,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case LED_M1:
         case LED_M2:
         case LED_M3:
-            if (record->event.pressed) {
-                led_lighting_mode = keycode - LED_M0;
-                dprintf("led_lighting_mode = %d\n", led_lighting_mode);
-            }
             return false;
         case CNF_0:
         case CNF_1:
@@ -223,3 +177,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 }
 
+void rgb_matrix_indicators_user(void) {
+    rgb_matrix_set_color_all(0, 0xff, 0xff);
+}
