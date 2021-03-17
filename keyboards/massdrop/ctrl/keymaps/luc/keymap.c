@@ -5,6 +5,8 @@
 
 #define DRIVER_LED_UNDERGLOW_START 87
 
+void led_init_configs(void);
+
 enum ctrl_keycodes {
     BOOT = SAFE_RANGE, // Restart into bootloader after hold timeout
     LED_M0,            // LED mode 0 (all)
@@ -38,12 +40,12 @@ enum ctrl_keycodes {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(
-        KC_ESC,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,             KC_PSCR, KC_SLCK, BOOT, \
+        KC_ESC,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,             KC_PSCR, _______, BOOT, \
         KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_MINS, KC_EQL,  KC_BSPC,   KC_INS,  KC_HOME, KC_PGUP, \
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS,   KC_DEL,  KC_END,  KC_PGDN, \
         _______, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, KC_ENT, \
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,                              KC_UP, \
-        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(2),   KC_APP,  KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
+        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(2),   _______, KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
     ),
     [1] = LAYOUT(
         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,            _______, _______, _______, \
@@ -82,6 +84,7 @@ void matrix_init_user(void) {
     // hardware cost (which is always thrown away by what we do in
     // rgb_matrix_indicators_user anyway)
     rgb_matrix_mode(RGB_MATRIX_NONE);
+    led_init_configs();
 };
 
 void matrix_scan_user(void) {
@@ -117,7 +120,7 @@ void handle_runtime_color_config(uint16_t keycode) {
     }
 }
 
-uint8_t led_mode = 0;
+uint8_t led_mode = 1;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
@@ -192,6 +195,97 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define LED_MODE_UNDERGLOW 2
 #define LED_MODE_OFF       3
 
+typedef struct
+{
+    bool enabled;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} _led_config_t;
+
+_led_config_t led_configs[DRIVER_LED_TOTAL];
+
+enum led_index {
+    ESC, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINTSCREEN, SCROLLLOCK, PAUSE,
+    BACKTICK, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, HYPHEN, EQUALS, BACKSPACE, INSERT, HOME, PAGEUP,
+    TAB, Q, W, E, R, T, Y, U, I, O, P, LEFTBRACKET, RIGHTBRACKET, BACKSLASH, DELETE, LED_INDEX_END, PAGEDOWN,
+    CAPSLOCK, A, S, D, F, G, H, J, K, L, SEMICOLON, QUOTE, ENTER,
+    LSHIFT, Z, X, C, V, B, N, M, COMMA, PERIOD, SLASH, RSHIFT, UP,
+    LCTRL, LGUI, LALT, SPACE, RALT, FN, RGUI, RCTRL, LEFT, DOWN, RIGHT,
+};
+
+void led_config_enable(int index, uint8_t r, uint8_t g, uint8_t b)
+{
+    led_configs[index].enabled = true;
+    led_configs[index].r = r;
+    led_configs[index].g = g;
+    led_configs[index].b = b;
+}
+
+void led_init_configs()
+{
+    led_config_enable(CAPSLOCK, OFF);
+    led_config_enable(SCROLLLOCK, OFF);
+    led_config_enable(PAUSE, OFF);
+    led_config_enable(RGUI, OFF);
+    led_config_enable(ESC, RGB_WHITE);
+    led_config_enable(TAB, RGB_WHITE);
+    led_config_enable(LSHIFT, RGB_WHITE);
+    led_config_enable(LCTRL, RGB_WHITE);
+    led_config_enable(LGUI, RGB_WHITE);
+    led_config_enable(LALT, RGB_WHITE);
+    led_config_enable(RALT, RGB_WHITE);
+    led_config_enable(FN, RGB_WHITE);
+    led_config_enable(RCTRL, RGB_WHITE);
+    led_config_enable(RSHIFT, RGB_WHITE);
+    led_config_enable(ENTER, RGB_WHITE);
+    led_config_enable(BACKSPACE, RGB_WHITE);
+    led_config_enable(F5, RGB_WHITE);
+    led_config_enable(F6, RGB_WHITE);
+    led_config_enable(F7, RGB_WHITE);
+    led_config_enable(F8, RGB_WHITE);
+    led_config_enable(INSERT, RGB_WHITE);
+    led_config_enable(HOME, RGB_WHITE);
+    led_config_enable(PAGEUP, RGB_WHITE);
+    led_config_enable(DELETE, RGB_WHITE);
+    led_config_enable(PAGEDOWN, RGB_WHITE);
+    led_config_enable(UP, RGB_WHITE);
+    led_config_enable(DOWN, RGB_WHITE);
+    led_config_enable(LEFT, RGB_WHITE);
+    led_config_enable(RIGHT, RGB_WHITE);
+    led_config_enable(PRINTSCREEN, RGB_WHITE);
+    led_config_enable(LED_INDEX_END, RGB_WHITE);
+
+#define _purp 0xff, 0x40, 0xff
+
+    led_config_enable(_1, _purp);
+    led_config_enable(_2, _purp);
+    led_config_enable(_3, _purp);
+    led_config_enable(_4, _purp);
+    led_config_enable(_5, _purp);
+    led_config_enable(_6, _purp);
+    led_config_enable(_7, _purp);
+    led_config_enable(_8, _purp);
+    led_config_enable(_9, _purp);
+    led_config_enable(_0, _purp);
+
+    led_config_enable(ESC, RGB_GREEN);
+    led_config_enable(SEMICOLON, RGB_GREEN);
+
+#define _crysis 0, 0xff, 0x40
+
+    led_config_enable(H, _crysis);
+    led_config_enable(J, _crysis);
+    led_config_enable(K, _crysis);
+    led_config_enable(L, _crysis);
+}
+
+void led_config_disable(int index)
+{
+    led_configs[index].enabled = false;
+}
+
 void rgb_set_keys(uint8_t r, uint8_t g, uint8_t b)
 {
     for (int i = 0; i < DRIVER_LED_UNDERGLOW_START; ++i)
@@ -204,14 +298,27 @@ void rgb_set_underglow(uint8_t r, uint8_t g, uint8_t b)
         rgb_matrix_set_color(i, r, g, b);
 }
 
+void rgb_apply_config(int min, int max_exclusive)
+{
+    for (int i = min; i < max_exclusive; ++i)
+        if (led_configs[i].enabled)
+            rgb_matrix_set_color(i, led_configs[i].r, led_configs[i].g, led_configs[i].b);
+}
+
 void rgb_matrix_indicators_user(void)
 {
     if (led_mode == LED_MODE_ALL || led_mode == LED_MODE_KEYS)
+    {
         rgb_set_keys(CONFIG);
+        rgb_apply_config(0, DRIVER_LED_UNDERGLOW_START);
+    }
     else
         rgb_set_keys(OFF);
     if (led_mode == LED_MODE_ALL || led_mode == LED_MODE_UNDERGLOW)
+    {
         rgb_set_underglow(CONFIG);
+        rgb_apply_config(DRIVER_LED_UNDERGLOW_START, DRIVER_LED_TOTAL);
+    }
     else
         rgb_set_underglow(OFF);
 }
