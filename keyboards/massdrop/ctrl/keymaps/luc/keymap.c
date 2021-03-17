@@ -6,6 +6,16 @@
 #define DRIVER_LED_UNDERGLOW_START 87
 
 void led_init_configs(void);
+void led_config_enable(int index, uint8_t r, uint8_t g, uint8_t b);
+
+enum led_index {
+    ESC, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINTSCREEN, SCROLLLOCK, PAUSE,
+    BACKTICK, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, HYPHEN, EQUALS, BACKSPACE, INSERT, HOME, PAGEUP,
+    TAB, Q, W, E, R, T, Y, U, I, O, P, LEFTBRACKET, RIGHTBRACKET, BACKSLASH, DELETE, LED_INDEX_END, PAGEDOWN,
+    CAPSLOCK, A, S, D, F, G, H, J, K, L, SEMICOLON, QUOTE, ENTER,
+    LSHIFT, Z, X, C, V, B, N, M, COMMA, PERIOD, SLASH, RSHIFT, UP,
+    LCTRL, LGUI, LALT, SPACE, RALT, FN, RGUI, RCTRL, LEFT, DOWN, RIGHT,
+};
 
 enum ctrl_keycodes {
     BOOT = SAFE_RANGE, // Restart into bootloader after hold timeout
@@ -36,7 +46,100 @@ enum ctrl_keycodes {
     DBG_MTX,              //DEBUG Toggle Matrix Prints
     DBG_KBD,               //DEBUG Toggle Keyboard Prints
     DBG_MOU,               //DEBUG Toggle Mouse Prints
+
+    TGT_SET, // set single-led config target
 };
+
+int keycode_to_led(uint16_t keycode)
+{
+    switch (keycode) {
+        case KC_ESC: return ESC;
+        case KC_F1: return F1;
+        case KC_F2: return F2;
+        case KC_F3: return F3;
+        case KC_F4: return F4;
+        case KC_F5: return F5;
+        case KC_F6: return F6;
+        case KC_F7: return F7;
+        case KC_F8: return F8;
+        case KC_F9: return F9;
+        case KC_F10: return F10;
+        case KC_F11: return F11;
+        case KC_F12: return F12;
+        case KC_PSCR: return PRINTSCREEN;
+        case KC_GRV: return BACKTICK;
+        case KC_1: return _1;
+        case KC_2: return _2;
+        case KC_3: return _3;
+        case KC_4: return _4;
+        case KC_5: return _5;
+        case KC_6: return _6;
+        case KC_7: return _7;
+        case KC_8: return _8;
+        case KC_9: return _9;
+        case KC_0: return _0;
+        case KC_MINS: return HYPHEN;
+        case KC_EQL: return EQUALS;
+        case KC_BSPC: return BACKSPACE;
+        case KC_INS: return INSERT;
+        case KC_HOME: return HOME;
+        case KC_PGUP: return PAGEUP;
+        case KC_TAB: return TAB;
+        case KC_Q: return Q;
+        case KC_W: return W;
+        case KC_E: return E;
+        case KC_R: return R;
+        case KC_T: return T;
+        case KC_Y: return Y;
+        case KC_U: return U;
+        case KC_I: return I;
+        case KC_O: return O;
+        case KC_P: return P;
+        case KC_LBRC: return LEFTBRACKET;
+        case KC_RBRC: return RIGHTBRACKET;
+        case KC_BSLS: return BACKSLASH;
+        case KC_DEL: return DELETE;
+        case KC_END: return LED_INDEX_END;
+        case KC_PGDN: return PAGEDOWN;
+        case KC_A: return A;
+        case KC_S: return S;
+        case KC_D: return D;
+        case KC_F: return F;
+        case KC_G: return G;
+        case KC_H: return H;
+        case KC_J: return J;
+        case KC_K: return K;
+        case KC_L: return L;
+        case KC_SCLN: return SEMICOLON;
+        case KC_QUOT: return QUOTE;
+        case KC_ENT: return ENTER;
+        case KC_LSFT: return LSHIFT;
+        case KC_Z: return Z;
+        case KC_X: return X;
+        case KC_C: return C;
+        case KC_V: return V;
+        case KC_B: return B;
+        case KC_N: return N;
+        case KC_M: return M;
+        case KC_COMM: return COMMA;
+        case KC_DOT: return PERIOD;
+        case KC_SLSH: return SLASH;
+        case KC_RSFT: return RSHIFT;
+        case KC_UP: return UP;
+        case KC_LCTL: return LCTRL;
+        case KC_LGUI: return LGUI;
+        case KC_LALT: return LALT;
+        case KC_SPC: return SPACE;
+        case KC_RALT: return RALT;
+        case KC_RCTL: return RCTRL;
+        case KC_LEFT: return LEFT;
+        case KC_DOWN: return DOWN;
+        case KC_RGHT: return RIGHT;
+        default:
+            return 0;
+    }
+}
+
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(
@@ -45,23 +148,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS,   KC_DEL,  KC_END,  KC_PGDN, \
         _______, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, KC_ENT, \
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,                              KC_UP, \
-        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(2),   _______, KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
+        KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(1),   _______, KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
     ),
-    [1] = LAYOUT(
-        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,            _______, _______, _______, \
-        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   _______, _______, _______, \
-        _______, S(KC_Q), S(KC_W), S(KC_E), S(KC_R), S(KC_T), S(KC_Y), S(KC_U), S(KC_I), S(KC_O), S(KC_P), _______, _______, _______,   _______, _______, _______, \
-        TG(1),   S(KC_A), S(KC_S), S(KC_D), S(KC_F), S(KC_G), S(KC_H), S(KC_J), S(KC_K), S(KC_L), _______, _______, _______, \
-        _______, S(KC_Z), S(KC_X), S(KC_C), S(KC_V), S(KC_B), S(KC_N), S(KC_M), _______, _______, _______, _______,                              _______, \
-        _______, _______, _______,                   _______,                            _______, _______, _______, _______,            _______, _______, _______ \
-    ),
-    [2] = LAYOUT( // command mode
+    [1] = LAYOUT( // command mode
         _______, LED_M0,  LED_M1,  LED_M2,  LED_M3,  _______, _______, _______, _______, DBG_TOG, DBG_MTX, DBG_KBD, DBG_MOU,            _______, _______, _______, \
         _______, CNF_1,   CNF_2,   CNF_3,   CNF_4,   CNF_5,   CNF_6,   CNF_7,   CNF_8,   CNF_9,   CNF_0,   _______, _______, _______,   _______, _______, _______, \
         _______, _______, _______, CNF_E,   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   _______, _______, _______, \
         _______, CNF_A,   _______, CNF_D,   CNF_F,   _______, _______, _______, _______, _______, _______, _______, _______, \
         _______, _______, _______, CNF_C,   _______, CNF_B,   _______, _______, _______, _______, _______, _______,                              _______, \
-        _______, _______, _______,                   _______,                            _______, _______, _______, _______,            _______, _______, _______ \
+        _______, _______, _______,                   _______,                            _______, _______, TGT_SET, _______,            _______, _______, _______ \
     ),
     /*
     [X] = LAYOUT(
@@ -102,28 +197,48 @@ uint8_t b = 0xff;
 uint32_t runtime_color_configval = 0;
 uint32_t runtime_color_configpos = 0;
 
+uint8_t led_mode = 1;
+
+bool needs_target = false;
+int led_target = -1;
+
 void handle_runtime_color_config(uint16_t keycode) {
     uint16_t v = keycode - CNF_0;
     runtime_color_configval |= v << (runtime_color_configpos++ * 4);
     if (runtime_color_configpos == 6) {
-        r = (runtime_color_configval >>  0) & 0xff;
-        g = (runtime_color_configval >>  8) & 0xff;
-        b = (runtime_color_configval >> 16) & 0xff;
+        int _r = (runtime_color_configval >>  0) & 0xff;
+        int _g = (runtime_color_configval >>  8) & 0xff;
+        int _b = (runtime_color_configval >> 16) & 0xff;
 
         // human-readable version has the nibbles swapped from what they should be
-        r = ((r&0x0f)<<4) | ((r&0xf0)>>4);
-        g = ((g&0x0f)<<4) | ((g&0xf0)>>4);
-        b = ((b&0x0f)<<4) | ((b&0xf0)>>4);
+        _r = ((_r&0x0f)<<4) | ((_r&0xf0)>>4);
+        _g = ((_g&0x0f)<<4) | ((_g&0xf0)>>4);
+        _b = ((_b&0x0f)<<4) | ((_b&0xf0)>>4);
+
+        if (led_target == -1)
+        {
+            r = _r; g = _g; b = _b;
+        }
+        else
+        {
+            led_config_enable(led_target, _r, _g, _b);
+            led_target = -1;
+        }
 
         runtime_color_configval = 0;
         runtime_color_configpos = 0;
     }
 }
 
-uint8_t led_mode = 1;
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
+
+    if (needs_target && record->event.pressed)
+    {
+        needs_target = false;
+        led_target = keycode_to_led(keycode);
+        return false;
+    }
 
     switch (keycode) {
         case DBG_TOG:
@@ -182,6 +297,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed)
                 handle_runtime_color_config(keycode);
             return false;
+        case TGT_SET:
+            if (record->event.pressed)
+                needs_target = true;
+            return false;
         default:
             return true;
     }
@@ -205,15 +324,6 @@ typedef struct
 } _led_config_t;
 
 _led_config_t led_configs[DRIVER_LED_TOTAL];
-
-enum led_index {
-    ESC, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINTSCREEN, SCROLLLOCK, PAUSE,
-    BACKTICK, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, HYPHEN, EQUALS, BACKSPACE, INSERT, HOME, PAGEUP,
-    TAB, Q, W, E, R, T, Y, U, I, O, P, LEFTBRACKET, RIGHTBRACKET, BACKSLASH, DELETE, LED_INDEX_END, PAGEDOWN,
-    CAPSLOCK, A, S, D, F, G, H, J, K, L, SEMICOLON, QUOTE, ENTER,
-    LSHIFT, Z, X, C, V, B, N, M, COMMA, PERIOD, SLASH, RSHIFT, UP,
-    LCTRL, LGUI, LALT, SPACE, RALT, FN, RGUI, RCTRL, LEFT, DOWN, RIGHT,
-};
 
 void led_config_enable(int index, uint8_t r, uint8_t g, uint8_t b)
 {
