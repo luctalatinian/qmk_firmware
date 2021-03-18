@@ -6,12 +6,27 @@
 #define DRIVER_LED_UNDERGLOW_START 87
 
 void led_init_configs(void);
+
 void led_config_enable(int index, uint8_t r, uint8_t g, uint8_t b);
+void led_config_disable(int index);
 
 void led_sleep(void);
 void led_wake(void);
 
+typedef struct
+{
+    bool enabled;
+    bool from_runtime;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} _led_config_t;
+
+_led_config_t led_configs[DRIVER_LED_TOTAL];
+
 int stored_led_mode = -1;
+int led_mode = 0;
 
 enum led_index {
     ESC, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINTSCREEN, SCROLLLOCK, PAUSE,
@@ -53,6 +68,7 @@ enum ctrl_keycodes {
     DBG_MOU,               //DEBUG Toggle Mouse Prints
 
     TGT_SET, // set single-led config target
+    LED_RST, // reset runtime-configured LEDs
 };
 
 int keycode_to_led(uint16_t keycode)
@@ -156,7 +172,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LCTL, KC_LGUI, KC_LALT,                   KC_SPC,                             KC_RALT, MO(1),   _______, KC_RCTL,            KC_LEFT, KC_DOWN, KC_RGHT \
     ),
     [1] = LAYOUT( // command mode
-        _______, LED_M0,  LED_M1,  LED_M2,  LED_M3,  _______, _______, _______, _______, DBG_TOG, DBG_MTX, DBG_KBD, DBG_MOU,            _______, _______, _______, \
+        _______, LED_M0,  LED_M1,  LED_M2,  LED_M3,  _______, _______, _______, _______, DBG_TOG, DBG_MTX, DBG_KBD, DBG_MOU,            _______, LED_RST, _______, \
         _______, CNF_1,   CNF_2,   CNF_3,   CNF_4,   CNF_5,   CNF_6,   CNF_7,   CNF_8,   CNF_9,   CNF_0,   _______, _______, _______,   _______, _______, _______, \
         _______, _______, _______, CNF_E,   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   _______, _______, _______, \
         _______, CNF_A,   _______, CNF_D,   CNF_F,   _______, _______, _______, _______, _______, _______, _______, _______, \
@@ -210,7 +226,6 @@ void raw_hid_receive(uint8_t* data, uint8_t length)
 uint32_t runtime_color_configval = 0;
 uint32_t runtime_color_configpos = 0;
 
-uint8_t led_mode = 1;
 
 bool needs_target = false;
 int led_target = -1;
@@ -318,6 +333,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed)
                 needs_target = true;
             return false;
+        case LED_RST:
+            for (int i = 0; i < DRIVER_LED_TOTAL; ++i)
+                if (led_configs[i].from_runtime)
+                    led_config_disable(i);
+            return false;
         default:
             return true;
     }
@@ -331,86 +351,82 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define LED_MODE_UNDERGLOW 2
 #define LED_MODE_OFF       3
 
-typedef struct
-{
-    bool enabled;
-
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} _led_config_t;
-
-_led_config_t led_configs[DRIVER_LED_TOTAL];
-
 void led_config_enable(int index, uint8_t r, uint8_t g, uint8_t b)
 {
     led_configs[index].enabled = true;
+    led_configs[index].from_runtime = true;
     led_configs[index].r = r;
     led_configs[index].g = g;
     led_configs[index].b = b;
 }
 
-void led_init_configs()
-{
-    led_config_enable(CAPSLOCK, OFF);
-    led_config_enable(SCROLLLOCK, OFF);
-    led_config_enable(PAUSE, OFF);
-    led_config_enable(RGUI, OFF);
-    led_config_enable(ESC, RGB_WHITE);
-    led_config_enable(TAB, RGB_WHITE);
-    led_config_enable(LSHIFT, RGB_WHITE);
-    led_config_enable(LCTRL, RGB_WHITE);
-    led_config_enable(LGUI, RGB_WHITE);
-    led_config_enable(LALT, RGB_WHITE);
-    led_config_enable(RALT, RGB_WHITE);
-    led_config_enable(FN, RGB_WHITE);
-    led_config_enable(RCTRL, RGB_WHITE);
-    led_config_enable(RSHIFT, RGB_WHITE);
-    led_config_enable(ENTER, RGB_WHITE);
-    led_config_enable(BACKSPACE, RGB_WHITE);
-    led_config_enable(F5, RGB_WHITE);
-    led_config_enable(F6, RGB_WHITE);
-    led_config_enable(F7, RGB_WHITE);
-    led_config_enable(F8, RGB_WHITE);
-    led_config_enable(INSERT, RGB_WHITE);
-    led_config_enable(HOME, RGB_WHITE);
-    led_config_enable(PAGEUP, RGB_WHITE);
-    led_config_enable(DELETE, RGB_WHITE);
-    led_config_enable(PAGEDOWN, RGB_WHITE);
-    led_config_enable(UP, RGB_WHITE);
-    led_config_enable(DOWN, RGB_WHITE);
-    led_config_enable(LEFT, RGB_WHITE);
-    led_config_enable(RIGHT, RGB_WHITE);
-    led_config_enable(PRINTSCREEN, RGB_WHITE);
-    led_config_enable(LED_INDEX_END, RGB_WHITE);
-
-#define _purp 0xff, 0x40, 0xff
-
-    led_config_enable(_1, _purp);
-    led_config_enable(_2, _purp);
-    led_config_enable(_3, _purp);
-    led_config_enable(_4, _purp);
-    led_config_enable(_5, _purp);
-    led_config_enable(_6, _purp);
-    led_config_enable(_7, _purp);
-    led_config_enable(_8, _purp);
-    led_config_enable(_9, _purp);
-    led_config_enable(_0, _purp);
-
-    led_config_enable(ESC, RGB_GREEN);
-    led_config_enable(SEMICOLON, RGB_GREEN);
-
-#define _crysis 0, 0xff, 0x40
-
-    led_config_enable(H, _crysis);
-    led_config_enable(J, _crysis);
-    led_config_enable(K, _crysis);
-    led_config_enable(L, _crysis);
-}
-
 void led_config_disable(int index)
 {
     led_configs[index].enabled = false;
+}
+
+void led_config_enable_init(int index, uint8_t r, uint8_t g, uint8_t b)
+{
+    led_config_enable(index, r, g, b);
+    led_configs[index].from_runtime = false;
+}
+
+void led_init_configs()
+{
+    led_config_enable_init(CAPSLOCK, OFF);
+    led_config_enable_init(SCROLLLOCK, OFF);
+    led_config_enable_init(PAUSE, OFF);
+    led_config_enable_init(RGUI, OFF);
+    led_config_enable_init(ESC, RGB_WHITE);
+    led_config_enable_init(TAB, RGB_WHITE);
+    led_config_enable_init(LSHIFT, RGB_WHITE);
+    led_config_enable_init(LCTRL, RGB_WHITE);
+    led_config_enable_init(LGUI, RGB_WHITE);
+    led_config_enable_init(LALT, RGB_WHITE);
+    led_config_enable_init(RALT, RGB_WHITE);
+    led_config_enable_init(FN, RGB_WHITE);
+    led_config_enable_init(RCTRL, RGB_WHITE);
+    led_config_enable_init(RSHIFT, RGB_WHITE);
+    led_config_enable_init(ENTER, RGB_WHITE);
+    led_config_enable_init(BACKSPACE, RGB_WHITE);
+    led_config_enable_init(F5, RGB_WHITE);
+    led_config_enable_init(F6, RGB_WHITE);
+    led_config_enable_init(F7, RGB_WHITE);
+    led_config_enable_init(F8, RGB_WHITE);
+    led_config_enable_init(INSERT, RGB_WHITE);
+    led_config_enable_init(HOME, RGB_WHITE);
+    led_config_enable_init(PAGEUP, RGB_WHITE);
+    led_config_enable_init(DELETE, RGB_WHITE);
+    led_config_enable_init(PAGEDOWN, RGB_WHITE);
+    led_config_enable_init(UP, RGB_WHITE);
+    led_config_enable_init(DOWN, RGB_WHITE);
+    led_config_enable_init(LEFT, RGB_WHITE);
+    led_config_enable_init(RIGHT, RGB_WHITE);
+    led_config_enable_init(PRINTSCREEN, RGB_WHITE);
+    led_config_enable_init(LED_INDEX_END, RGB_WHITE);
+
+#define _purp 0xff, 0x40, 0xff
+
+    led_config_enable_init(_1, _purp);
+    led_config_enable_init(_2, _purp);
+    led_config_enable_init(_3, _purp);
+    led_config_enable_init(_4, _purp);
+    led_config_enable_init(_5, _purp);
+    led_config_enable_init(_6, _purp);
+    led_config_enable_init(_7, _purp);
+    led_config_enable_init(_8, _purp);
+    led_config_enable_init(_9, _purp);
+    led_config_enable_init(_0, _purp);
+
+    led_config_enable_init(ESC, RGB_GREEN);
+    led_config_enable_init(SEMICOLON, RGB_GREEN);
+
+#define _crysis 0, 0xff, 0x40
+
+    led_config_enable_init(H, _crysis);
+    led_config_enable_init(J, _crysis);
+    led_config_enable_init(K, _crysis);
+    led_config_enable_init(L, _crysis);
 }
 
 void rgb_set_keys(uint8_t r, uint8_t g, uint8_t b)
@@ -421,7 +437,7 @@ void rgb_set_keys(uint8_t r, uint8_t g, uint8_t b)
 
 void rgb_set_underglow(uint8_t r, uint8_t g, uint8_t b)
 {
-    for (int i = DRIVER_LED_UNDERGLOW_START; i < DRIVER_LED_TOTAL; ++i)
+    for (int i = DRIVER_LED_UNDERGLOW_START+13; i < DRIVER_LED_TOTAL; ++i)
         rgb_matrix_set_color(i, r, g, b);
 }
 
@@ -430,6 +446,12 @@ void rgb_apply_config(int min, int max_exclusive)
     for (int i = min; i < max_exclusive; ++i)
         if (led_configs[i].enabled)
             rgb_matrix_set_color(i, led_configs[i].r, led_configs[i].g, led_configs[i].b);
+}
+
+void lrgb_set_status(void)
+{
+    for (int i = DRIVER_LED_UNDERGLOW_START; i < DRIVER_LED_UNDERGLOW_START+13; ++i)
+        rgb_matrix_set_color(i, OFF);
 }
 
 void rgb_matrix_indicators_user(void)
@@ -441,6 +463,7 @@ void rgb_matrix_indicators_user(void)
     }
     else
         rgb_set_keys(OFF);
+
     if (led_mode == LED_MODE_ALL || led_mode == LED_MODE_UNDERGLOW)
     {
         rgb_set_underglow(CONFIG);
@@ -448,6 +471,8 @@ void rgb_matrix_indicators_user(void)
     }
     else
         rgb_set_underglow(OFF);
+
+    lrgb_set_status();
 }
 
 void led_sleep()
