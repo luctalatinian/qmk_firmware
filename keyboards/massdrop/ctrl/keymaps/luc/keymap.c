@@ -8,6 +8,11 @@
 void led_init_configs(void);
 void led_config_enable(int index, uint8_t r, uint8_t g, uint8_t b);
 
+void led_sleep(void);
+void led_wake(void);
+
+int stored_led_mode = -1;
+
 enum led_index {
     ESC, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, PRINTSCREEN, SCROLLLOCK, PAUSE,
     BACKTICK, _1, _2, _3, _4, _5, _6, _7, _8, _9, _0, HYPHEN, EQUALS, BACKSPACE, INSERT, HOME, PAGEUP,
@@ -173,6 +178,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 const uint32_t TIMEOUT = 1000*60*15; // 15 minutes
 
+uint32_t last_keypress;
+
 void matrix_init_user(void) {
     // this doesn't shut the LEDs off, it just sets it to a static color,
     // otherwise the default is the rotating RGB which I assume has some
@@ -180,19 +187,25 @@ void matrix_init_user(void) {
     // rgb_matrix_indicators_user anyway)
     rgb_matrix_mode(RGB_MATRIX_NONE);
     led_init_configs();
+    last_keypress = timer_read32();
 };
-
-void matrix_scan_user(void) {
-};
-
-void raw_hid_receive(uint8_t* data, uint8_t length)
-{
-}
 
 // runtime color config
 uint8_t r = 0;
 uint8_t g = 0xff;
 uint8_t b = 0xff;
+
+void matrix_scan_user(void) {
+    if (stored_led_mode == -1 && timer_elapsed32(last_keypress) > TIMEOUT)
+        led_sleep();
+};
+
+void raw_hid_receive(uint8_t* data, uint8_t length)
+{
+    last_keypress = timer_read32();
+    if (stored_led_mode != -1)
+        led_wake();
+}
 
 uint32_t runtime_color_configval = 0;
 uint32_t runtime_color_configpos = 0;
@@ -232,6 +245,10 @@ void handle_runtime_color_config(uint16_t keycode) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
+
+    last_keypress = timer_read32();
+    if (stored_led_mode != -1)
+        led_wake();
 
     if (needs_target && record->event.pressed)
     {
@@ -431,4 +448,16 @@ void rgb_matrix_indicators_user(void)
     }
     else
         rgb_set_underglow(OFF);
+}
+
+void led_sleep()
+{
+    stored_led_mode = led_mode;
+    led_mode = LED_MODE_OFF;
+}
+
+void led_wake()
+{
+    led_mode = stored_led_mode;
+    stored_led_mode = -1;
 }
