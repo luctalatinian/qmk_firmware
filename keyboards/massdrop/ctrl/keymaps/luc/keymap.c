@@ -258,9 +258,11 @@ void handle_runtime_color_config(uint16_t keycode) {
     }
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    static uint32_t key_timer;
+bool reset_held = false;
 
+uint32_t key_timer;
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     last_keypress = timer_read32();
     if (stored_led_mode != -1)
         led_wake();
@@ -295,8 +297,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         case BOOT:
             if (record->event.pressed) {
+                reset_held = true;
                 key_timer = timer_read32();
             } else {
+                reset_held = false;
                 if (timer_elapsed32(key_timer) >= 500) {
                     reset_keyboard();
                 }
@@ -448,10 +452,19 @@ void rgb_apply_config(int min, int max_exclusive)
             rgb_matrix_set_color(i, led_configs[i].r, led_configs[i].g, led_configs[i].b);
 }
 
+#define STATUS_LED_BOOT DRIVER_LED_UNDERGLOW_START + 1
+#define STATUS_LED_CONFIG_START DRIVER_LED_UNDERGLOW_START + 11
+
 void lrgb_set_status(void)
 {
     for (int i = DRIVER_LED_UNDERGLOW_START; i < DRIVER_LED_UNDERGLOW_START+13; ++i)
         rgb_matrix_set_color(i, OFF);
+
+    if (reset_held && timer_elapsed32(key_timer) >= 500)
+        rgb_matrix_set_color(STATUS_LED_BOOT, RGB_RED);
+
+    for (int i = STATUS_LED_CONFIG_START; i > STATUS_LED_CONFIG_START - runtime_color_configpos; --i)
+        rgb_matrix_set_color(i, RGB_WHITE);
 }
 
 void rgb_matrix_indicators_user(void)
