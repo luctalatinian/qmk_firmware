@@ -1,5 +1,7 @@
 #include QMK_KEYBOARD_H
 
+#include "lrgb.h"
+
 void matrix_init_user(void);
 void matrix_scan_user(void);
 void rgb_matrix_indicators_user(void);
@@ -41,7 +43,10 @@ void matrix_scan_user() {}
 
 void rgb_matrix_indicators_user()
 {
-    rgb_matrix_set_color_all(RGB_CYAN);
+    lrgb_set_keys_grey(RGB_CYAN);
+    lrgb_set_keys_black(RGB_WHITE);
+    lrgb_set_underglow_back(0, 0xff, 0x80);
+    lrgb_set_underglow_status();
 }
 
 void raw_hid_receive(uint8_t* data, uint8_t length) {}
