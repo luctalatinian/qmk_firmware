@@ -3,8 +3,6 @@
 #include "lled.h"
 #include "lrgb.h"
 
-#define DRIVER_LED_UNDERGLOW_START 87
-
 void lrgb_set_keys_grey(uint8_t r, uint8_t g, uint8_t b)
 {
     rgb_matrix_set_color(LLI_F1, r, g, b);
@@ -55,11 +53,6 @@ void lrgb_set_keys_grey(uint8_t r, uint8_t g, uint8_t b)
     rgb_matrix_set_color(LLI_Y, r, g, b);
     rgb_matrix_set_color(LLI_Z, r, g, b);
 
-    rgb_matrix_set_color(LLI_H, RGB_GREEN);
-    rgb_matrix_set_color(LLI_J, RGB_GREEN);
-    rgb_matrix_set_color(LLI_K, RGB_GREEN);
-    rgb_matrix_set_color(LLI_L, RGB_GREEN);
-
     rgb_matrix_set_color(LLI_LEFTBRACKET, r, g, b);
     rgb_matrix_set_color(LLI_RIGHTBRACKET, r, g, b);
     rgb_matrix_set_color(LLI_BACKSLASH, r, g, b);
@@ -69,6 +62,14 @@ void lrgb_set_keys_grey(uint8_t r, uint8_t g, uint8_t b)
     rgb_matrix_set_color(LLI_PERIOD, r, g, b);
     rgb_matrix_set_color(LLI_SLASH, r, g, b);
     rgb_matrix_set_color(LLI_SPACE, r, g, b);
+}
+
+void lrgb_set_keys_vim(uint8_t r, uint8_t g, uint8_t b)
+{
+    rgb_matrix_set_color(LLI_H, r, g, b);
+    rgb_matrix_set_color(LLI_J, r, g, b);
+    rgb_matrix_set_color(LLI_K, r, g, b);
+    rgb_matrix_set_color(LLI_L, r, g, b);
 }
 
 void lrgb_set_keys_black(uint8_t r, uint8_t g, uint8_t b)

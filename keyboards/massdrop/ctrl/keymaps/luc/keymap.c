@@ -10,6 +10,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record);
 
 uint32_t boot_press_timer;
 
+lrgb_group_config config_grey = LRGB_GROUP_INIT(0, 0xff, 0xff);
+lrgb_group_config config_black = LRGB_GROUP_INIT(0xff, 0xff, 0xff);
+lrgb_group_config config_vim = LRGB_GROUP_INIT(0, 0xff, 0);
+lrgb_group_config config_underglow = LRGB_GROUP_INIT(0, 0xff, 0x80);
+
 enum ctrl_keycodes
 {
     KC_BT__ = SAFE_RANGE, // flash mode
@@ -37,15 +42,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 
-void matrix_init_user() {}
+void matrix_init_user()
+{
+    rgb_matrix_mode(RGB_MATRIX_NONE);
+}
 
 void matrix_scan_user() {}
 
 void rgb_matrix_indicators_user()
 {
-    lrgb_set_keys_grey(RGB_CYAN);
-    lrgb_set_keys_black(RGB_WHITE);
-    lrgb_set_underglow_back(0, 0xff, 0x80);
+    lrgb_set_keys_grey(LRGB_GROUP_EXPAND(config_grey));
+    lrgb_set_keys_black(LRGB_GROUP_EXPAND(config_black));
+    lrgb_set_keys_vim(LRGB_GROUP_EXPAND(config_vim));
+    lrgb_set_underglow_back(LRGB_GROUP_EXPAND(config_underglow));
     lrgb_set_underglow_status();
 }
 
