@@ -3,6 +3,13 @@
 #include "lled.h"
 #include "lrgb.h"
 
+void lrgb_group_config_set(lrgb_group_config *cfg, uint8_t r, uint8_t g, uint8_t b)
+{
+    cfg->r = r;
+    cfg->g = g;
+    cfg->b = b;
+}
+
 void lrgb_set_keys_grey(uint8_t r, uint8_t g, uint8_t b)
 {
     rgb_matrix_set_color(LLI_F1, r, g, b);
@@ -113,9 +120,12 @@ void lrgb_set_underglow_back(uint8_t r, uint8_t g, uint8_t b)
         rgb_matrix_set_color(i, r, g, b);
 }
 
-void lrgb_set_underglow_status()
+void lrgb_set_underglow_status(int runtime_color_configpos)
 {
     for (int i = DRIVER_LED_UNDERGLOW_START; i < DRIVER_LED_UNDERGLOW_START+13; ++i)
         rgb_matrix_set_color(i, RGB_OFF);
+
+    for (int i = STATUS_LED_CONFIG_START; i > STATUS_LED_CONFIG_START - runtime_color_configpos; --i)
+        rgb_matrix_set_color(i, RGB_WHITE);
 }
 
