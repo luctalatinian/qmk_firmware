@@ -1,5 +1,6 @@
 #include QMK_KEYBOARD_H
 
+#include "lcol.h"
 #include "lrgb.h"
 
 void matrix_init_user(void);
