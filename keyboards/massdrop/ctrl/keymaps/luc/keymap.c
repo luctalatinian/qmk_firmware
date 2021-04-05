@@ -200,8 +200,7 @@ void handle_runtime_color_config(uint16_t keycode)
         if (target_led_groups->head != NULL)
             lcol_list_foreach(target_led_groups, lambda_apply_target_config, &userdata);
 
-        lcol_list_delete(target_led_groups);
-        target_led_groups = lcol_list_new();
+        lcol_list_clear(target_led_groups);
 
         runtime_color_configval = 0;
         runtime_color_configpos = 0;
