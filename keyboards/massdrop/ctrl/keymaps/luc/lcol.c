@@ -2,7 +2,11 @@
 
 lcol_node* lcol_node_alloc()
 {
-    return (lcol_node*)malloc(sizeof(lcol_node));
+    lcol_node *node = malloc(sizeof(lcol_node));
+    node->data = NULL;
+    node->next = NULL;
+
+    return node;
 }
 
 void lcol_node_free(lcol_node *n)
@@ -12,7 +16,10 @@ void lcol_node_free(lcol_node *n)
 
 lcol_list* lcol_list_new()
 {
-    return (lcol_list*)malloc(sizeof(lcol_list));
+    lcol_list* list = malloc(sizeof(lcol_list));
+    list->head = NULL;
+
+    return list;
 }
 
 void lcol_list_push(lcol_list *l, void *data)
@@ -35,7 +42,6 @@ void lcol_list_delete(lcol_list *l)
     {
         next = node->next;
         lcol_node_free(node);
-        printf("free node\n");
         node = next;
     }
 

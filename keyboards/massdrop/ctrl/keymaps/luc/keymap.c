@@ -3,6 +3,13 @@
 #include "lcol.h"
 #include "lrgb.h"
 
+typedef struct
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} userdata_rgb;
+
 void matrix_init_user(void);
 void matrix_scan_user(void);
 void rgb_matrix_indicators_user(void);
@@ -14,7 +21,7 @@ void reset_led_groups(void);
 
 uint32_t boot_press_timer;
 
-int target_led_group;
+lcol_list *target_led_groups;
 
 uint32_t runtime_color_configval = 0;
 uint32_t runtime_color_configpos = 0;
@@ -52,6 +59,8 @@ enum ctrl_keycodes
     CNF_F,
 
     KC_RSLG, // reset led groups
+
+    KC_TDBG, // toggle debug
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -65,7 +74,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [1] = LAYOUT(
         KC_RSLG, KC_SLG0, KC_SLG1, KC_SLG2, KC_SLG3, _______, _______, _______, _______, _______, _______, _______, _______,            _______, _______, _______, \
-        _______, CNF_1,   CNF_2,   CNF_3,   CNF_4,   CNF_5,   CNF_6,   CNF_7,   CNF_8,   CNF_9,   CNF_0,   _______, _______, _______,   _______, _______, _______, \
+        KC_TDBG, CNF_1,   CNF_2,   CNF_3,   CNF_4,   CNF_5,   CNF_6,   CNF_7,   CNF_8,   CNF_9,   CNF_0,   _______, _______, _______,   _______, _______, _______, \
         _______, _______, _______, CNF_E,   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,   _______, _______, _______, \
         _______, CNF_A,   _______, CNF_D,   CNF_F,   _______, _______, _______, _______, _______, _______, _______, _______, \
         _______, _______, _______, CNF_C,   _______, CNF_B,   _______, _______, _______, _______, _______, _______,                              _______, \
@@ -87,6 +96,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 void matrix_init_user()
 {
     rgb_matrix_mode(RGB_MATRIX_NONE);
+
+    target_led_groups = lcol_list_new();
 }
 
 void matrix_scan_user() {}
@@ -105,7 +116,8 @@ void raw_hid_receive(uint8_t* data, uint8_t length) {}
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_SLG0: case KC_SLG1: case KC_SLG2: case KC_SLG3:
-            target_led_group = keycode - KC_SLG0;
+            if (record->event.pressed)
+                lcol_list_push(target_led_groups, (void*)(keycode - KC_SLG0));
             return false;
         case CNF_0: case CNF_1: case CNF_2: case CNF_3:
         case CNF_4: case CNF_5: case CNF_6: case CNF_7:
@@ -127,8 +139,46 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
             }
             return false;
+        case KC_TDBG:
+            if (record->event.pressed)
+                TOGGLE_FLAG_AND_PRINT(debug_enable, "Debug mode");
+            return false;
         default:
             return true;
+    }
+}
+
+void lambda_apply_target_config(lcol_node* n, void *userdata)
+{
+    int target_led_group = (int)n->data;
+    userdata_rgb rgb = *(userdata_rgb*)userdata;
+    uint8_t _r = rgb.r;
+    uint8_t _g = rgb.g;
+    uint8_t _b = rgb.b;
+
+    if (target_led_group == 0) // grey
+    {
+        config_grey.r = _r;
+        config_grey.g = _g;
+        config_grey.b = _b;
+    }
+    else if (target_led_group == 1) // black
+    {
+        config_black.r = _r;
+        config_black.g = _g;
+        config_black.b = _b;
+    }
+    else if (target_led_group == 2) // vim
+    {
+        config_vim.r = _r;
+        config_vim.g = _g;
+        config_vim.b = _b;
+    }
+    else if (target_led_group == 3) // underglow
+    {
+        config_underglow.r = _r;
+        config_underglow.g = _g;
+        config_underglow.b = _b;
     }
 }
 
@@ -146,30 +196,12 @@ void handle_runtime_color_config(uint16_t keycode)
         _g = ((_g&0x0f)<<4) | ((_g&0xf0)>>4);
         _b = ((_b&0x0f)<<4) | ((_b&0xf0)>>4);
 
-        if (target_led_group == 0) // grey
-        {
-            config_grey.r = _r;
-            config_grey.g = _g;
-            config_grey.b = _b;
-        }
-        else if (target_led_group == 1) // black
-        {
-            config_black.r = _r;
-            config_black.g = _g;
-            config_black.b = _b;
-        }
-        else if (target_led_group == 2) // vim
-        {
-            config_vim.r = _r;
-            config_vim.g = _g;
-            config_vim.b = _b;
-        }
-        else if (target_led_group == 3) // underglow
-        {
-            config_underglow.r = _r;
-            config_underglow.g = _g;
-            config_underglow.b = _b;
-        }
+        userdata_rgb userdata = {.r = _r, .g = _g, .b = _b};
+        if (target_led_groups->head != NULL)
+            lcol_list_foreach(target_led_groups, lambda_apply_target_config, &userdata);
+
+        lcol_list_delete(target_led_groups);
+        target_led_groups = lcol_list_new();
 
         runtime_color_configval = 0;
         runtime_color_configpos = 0;
