@@ -2,6 +2,8 @@
 
 #include "lcol.h"
 #include "lrgb.h"
+#include "ltimer.h"
+#include "print.h"
 
 typedef struct
 {
@@ -92,18 +94,36 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     */
 };
 
+bool lled_enable = true;
+
+void test_blink(void)
+{
+    lled_enable = !lled_enable;
+}
 
 void matrix_init_user()
 {
     rgb_matrix_mode(RGB_MATRIX_NONE);
 
     target_led_groups = lcol_list_new();
+
+    ltimer_init();
+    ltimer_set_interval(test_blink, 500);
 }
 
-void matrix_scan_user() {}
+void matrix_scan_user()
+{
+    ltimer_select();
+}
 
 void rgb_matrix_indicators_user()
 {
+    if (!lled_enable)
+    {
+        rgb_matrix_set_color_all(0,0,0);
+        return;
+    }
+
     lrgb_set_keys_grey(LRGB_GROUP_EXPAND(config_grey));
     lrgb_set_keys_black(LRGB_GROUP_EXPAND(config_black));
     lrgb_set_keys_vim(LRGB_GROUP_EXPAND(config_vim));
